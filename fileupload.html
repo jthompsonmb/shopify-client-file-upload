@@ -1,0 +1,224 @@
+// JavaScript Document
+
+<style>
+  .uploadBox {
+    position: relative;
+    padding: 4px;
+    width: 100%;
+    height: 200px;
+    border: 1px solid #e9e7e6;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f4f3f3;
+    border-radius: 10px;
+  }
+
+  .uploadBox label {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    cursor: pointer;
+  }
+
+  .uploadBox img {
+    position: absolute;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .uploadBox .uploadPreview {
+    display: none;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+  }
+
+  .uploadBox .uploadPreview i {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 140px;
+  }
+
+  .uploadBox .fileUpload {
+    display: none;
+  }
+
+  .uploadBox .uploadMessage {
+    color: #ED7422;
+    font-size: var(--button-text-size);
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .removeUploadFile {
+    content: '\f00d';
+    font-family: "Font Awesome Kit", "Font Awesome 6 Pro";
+    font-weight: 700;
+    display: block;
+    justify-content: center;
+    align-items: center;
+    width: 30px;
+    height: 30px;
+    background-color: #ED7422;
+    z-index: 100;
+    border-radius: 50%;
+    color: #ffffff;
+    cursor: pointer;
+    position: absolute;
+    display: none;
+    top: 10px;
+    right: 10px;
+  }
+
+  .removeUploadFile i {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .uploadBox .uploadPreview.filesize::after {
+    content: attr(data-size);
+    width: auto;
+    height: auto;
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #ED7422;
+    z-index: 1000;
+    color: #fff;
+    text-align: center;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 3px 10px;
+  }
+
+  .uploadBox .uploadPreview .error {
+    display: block;
+    width: 60%;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+
+  .uploadBox .uploadPreview .error i {
+    display: block;
+    position: relative;
+    text-align: center;
+    color: #ED7422;
+    font-size: 50px;
+    top: 0;
+    transform: translateX(-50%);
+    margin-bottom: 10px;
+  }
+
+  .uploadBox .uploadPreview div {
+    position: relative;
+    color: #ED7422;
+    font-size: 14px;
+    line-height: 14px;
+    font-weight: 700;
+  }
+</style>
+
+<label class="form__label">Attach files with your artwork.</label>
+<div class="row">
+  <div class="col form-group mb-5">
+    <div class="uploadBox">
+      <div class="uploadMessage">Click here to add your front.<br>20MB Max</div>
+      <label for="upload1" class=""></label>
+      <input id="upload1" class="fileUpload" type="file" name="properties[Artwork Front]" value="Choose a file">
+      <div class="uploadPreview filesize" data-size=""></div>
+      <div class="removeUploadFile"><i class="fa-solid fa-xmark"></i></div>
+    </div>
+  </div>
+
+  <div class="col form-group mb-5">
+    <div class="uploadBox">
+      <div class="uploadMessage">Click here to add your back.<br>20MB Max</div>
+      <label for="upload2" class=""></label>
+      <input id="upload2" class="fileUpload" type="file" name="properties[Artwork Back]" value="Choose a file">
+      <div class="uploadPreview filesize"></div>
+      <div class="removeUploadFile"><i class="fa-solid fa-xmark"></i></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  var maxFileSizeBytes = 20971520; // 20MB
+  $(function() {
+    $('body').on('change', '.fileUpload', function(e) {
+      $this = $(this);
+      var file = $this.prop('files')[0];
+      var $uploadBox = $this.closest('.uploadBox');
+      var $preview = $this.next('.uploadPreview');
+      var $message = $this.closest('.uploadBox').find('.uploadMessage');
+      var thumbnail = '';
+      if (file) {
+        if (file.size > maxFileSizeBytes) {
+          thumbnail = `<div class="error"><i class="fa-solid fa-circle-exclamation"></i><div>Files less than ${formatBytes(maxFileSizeBytes)} please</div></div>`;
+        } else {
+          switch (file.type) {
+            case 'application/pdf':
+              thumbnail = `<i class="fa-solid fa-file-pdf"></i>`;
+              break;
+            case 'image/gif':
+            case 'image/png':
+            case 'image/jpeg':
+              var reader = new FileReader();
+              reader.onloadend = function() {
+                $preview.attr('src', reader.result);
+                thumbnail = `<img src="${reader.result}" class="" alt="">`
+                $preview.html(thumbnail);
+              }
+              reader.readAsDataURL(file);
+              break;
+            case 'application/vnd.ms-excel':
+              thumbnail = `<i class="fa-solid fa-file-excel"></i>`;
+              break;
+            default:
+              thumbnail = `<i class="fa-solid fa-file"></i>`;
+          }
+        } /// max file size
+        $preview.attr('data-size', formatBytes(file.size));
+        $preview.html(thumbnail);
+        $preview.show();
+        $message.hide();
+        $uploadBox.find('.removeUploadFile').show();
+      } else {
+        $preview.attr('src', '');
+        $preview.hide();
+        $message.show();
+        $uploadBox.find('.removeUploadFile').hide();
+      }
+    });
+    $('body').on('click', '.removeUploadFile', function() {
+      var $uploadBox = $(this).closest('.uploadBox');
+      $uploadBox.find('.fileUpload').val('');
+      $uploadBox.find('.uploadPreview').attr('src', '').hide();
+      $uploadBox.find('.removeUploadFile').hide();
+      $uploadBox.find('.uploadMessage').show();
+    });
+    //// make the filesize in bytes readable
+    function formatBytes(bytes, decimals = 2) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const dm = decimals < 0 ? 0 : decimals;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    }
+  });
+</script>
